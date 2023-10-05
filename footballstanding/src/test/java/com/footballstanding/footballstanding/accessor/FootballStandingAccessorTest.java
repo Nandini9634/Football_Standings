@@ -6,15 +6,18 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import com.footballstanding.footballstanding.config.RestTemplateConfig;
+import com.footballstanding.footballstanding.exception.ApiAccessException;
+import com.footballstanding.footballstanding.model.Country;
+import com.footballstanding.footballstanding.model.League;
+import com.footballstanding.footballstanding.model.Standings;
 import java.net.SocketTimeoutException;
 import java.util.Arrays;
 import java.util.List;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.junit.jupiter.MockitoSettings;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -23,93 +26,147 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import com.footballstanding.footballstanding.config.RestTemplateConfig;
-import com.footballstanding.footballstanding.exception.ApiAccessException;
-import com.footballstanding.footballstanding.model.Country;
-import com.footballstanding.footballstanding.model.League;
-import com.footballstanding.footballstanding.model.Standings;
-
-@MockitoSettings
 public class FootballStandingAccessorTest {
-    
-    private FootballStandingAccessor footballStandingAccessor;
 
-    @Mock
-    private RestTemplateConfig restTemplateConfig;
+  private FootballStandingAccessor footballStandingAccessor;
 
-    @Mock
-    private RestTemplate restTemplate;
+  @Mock
+  private RestTemplateConfig restTemplateConfig;
 
-    @BeforeEach
-    public void setUp() {
-        MockitoAnnotations.openMocks(this);
-        footballStandingAccessor = new FootballStandingAccessorImpl(getApiKey(), restTemplateConfig);
-        when(restTemplateConfig.getRestTemplateClient()).thenReturn(restTemplate);
-    }
+  @Mock
+  private RestTemplate restTemplate;
 
-    @Test
-    public void testGetCountriesSuccess() throws SocketTimeoutException {
-        List<Country> expectedCountries = Arrays.asList(new Country("1", "Country1"), new Country("2", "Country2"));
+  @BeforeEach
+  public void setUp() {
+    MockitoAnnotations.openMocks(this);
+    footballStandingAccessor =
+      new FootballStandingAccessorImpl(getApiKey(), restTemplateConfig);
+    when(restTemplateConfig.getRestTemplateClient()).thenReturn(restTemplate);
+  }
 
-        when(restTemplate.exchange(any(String.class), any(HttpMethod.class), any(), any(ParameterizedTypeReference.class)))
-                .thenReturn(new ResponseEntity<>(expectedCountries, HttpStatus.OK));
+  @Test
+  public void testGetCountriesSuccess() throws SocketTimeoutException {
+    List<Country> expectedCountries = Arrays.asList(
+      new Country("1", "Country1"),
+      new Country("2", "Country2")
+    );
 
-        List<Country> countries = footballStandingAccessor.getCountries();
-        assertNotNull(countries);
-        assertEquals(expectedCountries.size(), countries.size());
-    }
+    when(
+      restTemplate.exchange(
+        any(String.class),
+        any(HttpMethod.class),
+        any(),
+        any(ParameterizedTypeReference.class)
+      )
+    )
+      .thenReturn(new ResponseEntity<>(expectedCountries, HttpStatus.OK));
 
-    @Test
-    public void testGetLeaguesSuccess() {
-        String countryId = "C1";
-        List<League> expectedLeagues = Arrays.asList(new League("C1", "Country1", "L1", "League1"), new League("C2", "Country2", "L2", "League2"));
+    List<Country> countries = footballStandingAccessor.getCountries();
+    assertNotNull(countries);
+    assertEquals(expectedCountries.size(), countries.size());
+  }
 
-        when(restTemplate.exchange(any(String.class), any(HttpMethod.class), any(), any(ParameterizedTypeReference.class)))
-                .thenReturn(new ResponseEntity<>(expectedLeagues, HttpStatus.OK));
+  @Test
+  public void testGetLeaguesSuccess() {
+    String countryId = "C1";
+    List<League> expectedLeagues = Arrays.asList(
+      new League("C1", "Country1", "L1", "League1"),
+      new League("C2", "Country2", "L2", "League2")
+    );
 
-        List<League> leagues = footballStandingAccessor.getLeagues(countryId);
-        assertNotNull(leagues);
-        assertEquals(expectedLeagues.size(), leagues.size());
-    }
+    when(
+      restTemplate.exchange(
+        any(String.class),
+        any(HttpMethod.class),
+        any(),
+        any(ParameterizedTypeReference.class)
+      )
+    )
+      .thenReturn(new ResponseEntity<>(expectedLeagues, HttpStatus.OK));
 
-    @Test
-    public void testGetStandingsSuccess() {
-        String leagueId = "1";
-        List<Standings> expectedStandings = Arrays.asList(new Standings(), new Standings());
+    List<League> leagues = footballStandingAccessor.getLeagues(countryId);
+    assertNotNull(leagues);
+    assertEquals(expectedLeagues.size(), leagues.size());
+  }
 
-        when(restTemplate.exchange(any(String.class), any(HttpMethod.class), any(), any(ParameterizedTypeReference.class)))
-                .thenReturn(new ResponseEntity<>(expectedStandings, HttpStatus.OK));
+  @Test
+  public void testGetStandingsSuccess() {
+    String leagueId = "1";
+    List<Standings> expectedStandings = Arrays.asList(
+      new Standings(),
+      new Standings()
+    );
 
-        List<Standings> standings = footballStandingAccessor.getStandings(leagueId);
-        assertNotNull(standings);
-        assertEquals(expectedStandings.size(), standings.size());
-    }
+    when(
+      restTemplate.exchange(
+        any(String.class),
+        any(HttpMethod.class),
+        any(),
+        any(ParameterizedTypeReference.class)
+      )
+    )
+      .thenReturn(new ResponseEntity<>(expectedStandings, HttpStatus.OK));
 
-    @Test
-    public void testGetCountriesNotFound() {
-        when(restTemplate.exchange(any(String.class), any(HttpMethod.class), any(), any(ParameterizedTypeReference.class)))
-                .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
+    List<Standings> standings = footballStandingAccessor.getStandings(leagueId);
+    assertNotNull(standings);
+    assertEquals(expectedStandings.size(), standings.size());
+  }
 
-        assertThrows(ApiAccessException.class, () -> footballStandingAccessor.getCountries());
-    }
+  @Test
+  public void testGetCountriesNotFound() {
+    when(
+      restTemplate.exchange(
+        any(String.class),
+        any(HttpMethod.class),
+        any(),
+        any(ParameterizedTypeReference.class)
+      )
+    )
+      .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
 
-    @Test
-    public void testGetLeaguesServerError() {
-        when(restTemplate.exchange(any(String.class), any(HttpMethod.class), any(), any(ParameterizedTypeReference.class)))
-                .thenThrow(new RestClientException("Internal Server Error"));
+    assertThrows(
+      ApiAccessException.class,
+      () -> footballStandingAccessor.getCountries()
+    );
+  }
 
-        assertThrows(ApiAccessException.class, () -> footballStandingAccessor.getLeagues("1"));
-    }
+  @Test
+  public void testGetLeaguesServerError() {
+    when(
+      restTemplate.exchange(
+        any(String.class),
+        any(HttpMethod.class),
+        any(),
+        any(ParameterizedTypeReference.class)
+      )
+    )
+      .thenThrow(new RestClientException("Internal Server Error"));
 
-    @Test
-    public void testGetStandingsOtherException() {
-        when(restTemplate.exchange(any(String.class), any(HttpMethod.class), any(), any(ParameterizedTypeReference.class)))
-                .thenThrow(new IllegalArgumentException("Some other exception"));
+    assertThrows(
+      ApiAccessException.class,
+      () -> footballStandingAccessor.getLeagues("1")
+    );
+  }
 
-        assertThrows(ApiAccessException.class, () -> footballStandingAccessor.getStandings("1"));
-    }
-    
-    private String getApiKey() {
-        return "abc123";
-    }
+  @Test
+  public void testGetStandingsOtherException() {
+    when(
+      restTemplate.exchange(
+        any(String.class),
+        any(HttpMethod.class),
+        any(),
+        any(ParameterizedTypeReference.class)
+      )
+    )
+      .thenThrow(new IllegalArgumentException("Some other exception"));
+
+    assertThrows(
+      ApiAccessException.class,
+      () -> footballStandingAccessor.getStandings("1")
+    );
+  }
+
+  private String getApiKey() {
+    return "abc123";
+  }
 }

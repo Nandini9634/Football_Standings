@@ -4,74 +4,88 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.footballstanding.footballstanding.model.FootballStanding;
+import com.footballstanding.footballstanding.service.FootballStandingCacheService;
+import com.footballstanding.footballstanding.service.FootballStandingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.junit.jupiter.MockitoSettings;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.footballstanding.footballstanding.model.Standings;
-import com.footballstanding.footballstanding.service.FootballStandingCacheService;
-import com.footballstanding.footballstanding.service.FootballStandingService;
-
-@MockitoSettings
 public class FootballStandingControllerTest {
-    
-    @InjectMocks
-    private FootballStandingController footballStandingController;
 
-    @Mock
-    private FootballStandingService footballStandingService;
+  @InjectMocks
+  private FootballStandingController footballStandingController;
 
-    @Mock
-    private FootballStandingCacheService footballStandingCacheService;
+  @Mock
+  private FootballStandingService footballStandingService;
 
-    @BeforeEach
-    public void setup() {
-        MockitoAnnotations.openMocks(this);
-    }
+  @Mock
+  private FootballStandingCacheService footballStandingCacheService;
 
-    @Test
-    public void testGetStandingsWhenClientIsOffline() {
-        
-        String countryName = "Country1";
-        String leagueName = "League1";
-        String teamName = "Team1";
-        Boolean isClientOffline = true;
+  @BeforeEach
+  public void setup() {
+    MockitoAnnotations.openMocks(this);
+  }
 
-        Standings cachedStandings = new Standings();
-        when(footballStandingCacheService.getStandings(countryName, leagueName, teamName))
-                .thenReturn(new ResponseEntity<>(cachedStandings, HttpStatus.OK));
+  @Test
+  public void testGetStandingsWhenClientIsOffline() {
+    String countryName = "Country1";
+    String leagueName = "League1";
+    String teamName = "Team1";
+    Boolean isClientOffline = true;
 
-        ResponseEntity<Standings> response = footballStandingController.getStandings(countryName, leagueName, teamName, isClientOffline);
+    FootballStanding cachedStandings = new FootballStanding();
+    when(
+      footballStandingCacheService.getStandings(
+        countryName,
+        leagueName,
+        teamName
+      )
+    )
+      .thenReturn(new ResponseEntity<>(cachedStandings, HttpStatus.OK));
 
-        verify(footballStandingCacheService, times(1)).getStandings(countryName, leagueName, teamName);
+    ResponseEntity<FootballStanding> response = footballStandingController.getStandings(
+      countryName,
+      leagueName,
+      teamName,
+      isClientOffline
+    );
 
-        assert(response.getStatusCode()).equals(HttpStatus.OK);
-        assert(response.getBody()).equals(cachedStandings);
-    }
+    verify(footballStandingCacheService, times(1))
+      .getStandings(countryName, leagueName, teamName);
 
-    @Test
-    public void testGetStandingsWhenClientIsOnline() {
+    assert (response.getStatusCode()).equals(HttpStatus.OK);
+    assert (response.getBody()).equals(cachedStandings);
+  }
 
-        String countryName = "Country2";
-        String leagueName = "League2";
-        String teamName = "Team2";
-        Boolean isClientOffline = false;
+  @Test
+  public void testGetStandingsWhenClientIsOnline() {
+    String countryName = "Country2";
+    String leagueName = "League2";
+    String teamName = "Team2";
+    Boolean isClientOffline = false;
 
+    FootballStanding serviceStandings = new FootballStanding();
+    when(
+      footballStandingService.getStandings(countryName, leagueName, teamName)
+    )
+      .thenReturn(new ResponseEntity<>(serviceStandings, HttpStatus.OK));
 
-        Standings serviceStandings = new Standings();
-        when(footballStandingService.getStandings(countryName, leagueName, teamName))
-                .thenReturn(new ResponseEntity<>(serviceStandings, HttpStatus.OK));
+    ResponseEntity<FootballStanding> response = footballStandingController.getStandings(
+      countryName,
+      leagueName,
+      teamName,
+      isClientOffline
+    );
 
-        ResponseEntity<Standings> response = footballStandingController.getStandings(countryName, leagueName, teamName, isClientOffline);
+    verify(footballStandingService, times(1))
+      .getStandings(countryName, leagueName, teamName);
 
-        verify(footballStandingService, times(1)).getStandings(countryName, leagueName, teamName);
-
-        assert(response.getStatusCode()).equals(HttpStatus.OK);
-        assert(response.getBody()).equals(serviceStandings);
-    }
+    assert (response.getStatusCode()).equals(HttpStatus.OK);
+    assert (response.getBody()).equals(serviceStandings);
+  }
 }

@@ -3,75 +3,89 @@ package com.footballstanding.footballstanding.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
+import com.footballstanding.footballstanding.model.FootballStanding;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.junit.jupiter.MockitoSettings;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.footballstanding.footballstanding.model.Standings;
-
-@MockitoSettings
 public class FootballStandingCacheServiceTest {
-    
-    @Mock
-    private CacheManager cacheManager;
 
-    @Mock
-    private Cache cache;
+  @Mock
+  private CacheManager cacheManager;
 
-    private FootballStandingCacheService cacheService;
+  @Mock
+  private Cache cache;
 
-    @BeforeEach
-    public void setUp() {
-        MockitoAnnotations.openMocks(this);
-        cacheService = new FootballStandingCacheService(cacheManager);
-    }
+  private FootballStandingCacheService cacheService;
 
-    @Test
-    public void testGetStandingsDataInCache() {
-        String countryName = "Country1";
-        String leagueName = "League1";
-        String teamName = "Team1";
-        ResponseEntity<Object> cachedResponse = ResponseEntity.ok("Cached Data");
+  @BeforeEach
+  public void setUp() {
+    MockitoAnnotations.openMocks(this);
+    cacheService = new FootballStandingCacheService(cacheManager);
+  }
 
-        when(cacheManager.getCache("footballStandingApiDataCache")).thenReturn(cache);
-        when(cache.get(countryName + '-' + leagueName + '-' + teamName)).thenReturn(() -> cachedResponse);
+  @Test
+  public void testGetStandingsDataInCache() {
+    String countryName = "Country1";
+    String leagueName = "League1";
+    String teamName = "Team1";
+    ResponseEntity<Object> cachedResponse = ResponseEntity.ok("Cached Data");
 
-        ResponseEntity<Standings> result = cacheService.getStandings(countryName, leagueName, teamName);
+    when(cacheManager.getCache("footballStandingApiDataCache"))
+      .thenReturn(cache);
+    when(cache.get(countryName + '-' + leagueName + '-' + teamName))
+      .thenReturn(() -> cachedResponse);
 
-        assertEquals(HttpStatus.OK, result.getStatusCode());
-        assertEquals("Cached Data", result.getBody());
-    }
+    ResponseEntity<FootballStanding> result = cacheService.getStandings(
+      countryName,
+      leagueName,
+      teamName
+    );
 
-    @Test
-    public void testGetStandingsDataNotInCache() {
-        String countryName = "Country2";
-        String leagueName = "League2";
-        String teamName = "Team2";
+    assertEquals(HttpStatus.OK, result.getStatusCode());
+    assertEquals("Cached Data", result.getBody());
+  }
 
-        when(cacheManager.getCache("footballStandingApiDataCache")).thenReturn(cache);
-        when(cache.get(countryName + '-' + leagueName + '-' + teamName)).thenReturn(null);
+  @Test
+  public void testGetStandingsDataNotInCache() {
+    String countryName = "Country2";
+    String leagueName = "League2";
+    String teamName = "Team2";
 
-        ResponseEntity<Standings> result = cacheService.getStandings(countryName, leagueName, teamName);
+    when(cacheManager.getCache("footballStandingApiDataCache"))
+      .thenReturn(cache);
+    when(cache.get(countryName + '-' + leagueName + '-' + teamName))
+      .thenReturn(null);
 
-        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, result.getStatusCode());
-    }
+    ResponseEntity<FootballStanding> result = cacheService.getStandings(
+      countryName,
+      leagueName,
+      teamName
+    );
 
-    @Test
-    public void testGetStandingsCacheNotAvailable() {
-        String countryName = "Country3";
-        String leagueName = "League3";
-        String teamName = "Team3";
+    assertEquals(HttpStatus.SERVICE_UNAVAILABLE, result.getStatusCode());
+  }
 
-        when(cacheManager.getCache("footballStandingApiDataCache")).thenReturn(null);
+  @Test
+  public void testGetStandingsCacheNotAvailable() {
+    String countryName = "Country3";
+    String leagueName = "League3";
+    String teamName = "Team3";
 
-        ResponseEntity<Standings> result = cacheService.getStandings(countryName, leagueName, teamName);
+    when(cacheManager.getCache("footballStandingApiDataCache"))
+      .thenReturn(null);
 
-        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, result.getStatusCode());
-    }
+    ResponseEntity<FootballStanding> result = cacheService.getStandings(
+      countryName,
+      leagueName,
+      teamName
+    );
+
+    assertEquals(HttpStatus.SERVICE_UNAVAILABLE, result.getStatusCode());
+  }
 }
